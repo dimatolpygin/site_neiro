@@ -92,6 +92,10 @@ echo "  Все значения можно найти в вашем аккаун
 echo "============================================================"
 echo ""
 
+# Переключаем stdin на терминал — обязательно при запуске через curl | bash,
+# иначе read читает из pipe и немедленно получает EOF
+exec < /dev/tty
+
 read_var() {
   local prompt="$1"
   local var_name="$2"
@@ -100,10 +104,10 @@ read_var() {
 
   while [ -z "$value" ]; do
     if [ -n "$default" ]; then
-      read -rp "  $prompt [$default]: " value
+      read -rp "  $prompt [$default]: " value || true
       value="${value:-$default}"
     else
-      read -rp "  $prompt: " value
+      read -rp "  $prompt: " value || true
     fi
     if [ -z "$value" ]; then
       warn "Значение не может быть пустым"
@@ -282,7 +286,7 @@ fi
 # 13. Опциональный SSL через certbot
 # ------------------------------------------------------------
 echo ""
-read -rp "  Есть домен для SSL? Введите домен (или нажмите Enter чтобы пропустить): " DOMAIN
+read -rp "  Есть домен для SSL? Введите домен (или нажмите Enter чтобы пропустить): " DOMAIN || true
 if [ -n "$DOMAIN" ]; then
   info "Получение SSL-сертификата для $DOMAIN..."
   sed -i "s/server_name _;/server_name $DOMAIN;/" "$NGINX_CONF"
