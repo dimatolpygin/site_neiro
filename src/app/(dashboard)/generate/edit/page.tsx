@@ -11,7 +11,7 @@ export default async function EditGeneratePage() {
   const { data } = await supabase
     .from('model_pricing')
     .select('*')
-    .like('model_id', '%/edit')
+    .eq('type', 'image')
     .eq('is_active', true)
     .order('cost_kopecks');
 

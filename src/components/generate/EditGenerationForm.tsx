@@ -1,13 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { ModelPricing } from '@/types/database';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GenerationStatusPoller } from './GenerationStatusPoller';
 import { kopecksToRubles } from '@/lib/utils/currency';
-import { Loader2 } from 'lucide-react';
+import { uploadImageForEdit } from '@/lib/supabase/storage';
+import { createClient } from '@/lib/supabase/client';
+import { Loader2, Upload, X } from 'lucide-react';
 
 interface EditGenerationFormProps {
   models: ModelPricing[];
@@ -15,22 +17,55 @@ interface EditGenerationFormProps {
 
 export function EditGenerationForm({ models }: EditGenerationFormProps) {
   const [prompt, setPrompt] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
   const [modelId, setModelId] = useState(models[0]?.model_id ?? '');
+  const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [generationId, setGenerationId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const selectedModel = models.find(m => m.model_id === modelId);
 
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const selected = e.target.files?.[0];
+    if (!selected) return;
+    setFile(selected);
+    if (preview) URL.revokeObjectURL(preview);
+    setPreview(URL.createObjectURL(selected));
+  }
+
+  function handleRemoveFile() {
+    setFile(null);
+    if (preview) URL.revokeObjectURL(preview);
+    setPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!prompt.trim() || !imageUrl.trim()) return;
+    if (!prompt.trim() || !file) return;
 
-    setLoading(true);
     setError('');
     setGenerationId(null);
 
+    // Upload file first
+    setUploading(true);
+    let imageUrl: string;
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setError('Не авторизован'); return; }
+      imageUrl = await uploadImageForEdit(file, user.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Ошибка загрузки файла');
+      return;
+    } finally {
+      setUploading(false);
+    }
+
+    setLoading(true);
     try {
       const res = await fetch('/api/generate/edit', {
         method: 'POST',
@@ -58,6 +93,8 @@ export function EditGenerationForm({ models }: EditGenerationFormProps) {
   if (generationId) {
     return <GenerationStatusPoller generationId={generationId} type="image" onReset={() => setGenerationId(null)} />;
   }
+
+  const isSubmitting = uploading || loading;
 
   return (
     <div className="bg-white border-2 border-black shadow-[6px_6px_0px_#000] rounded-none">
@@ -87,16 +124,34 @@ export function EditGenerationForm({ models }: EditGenerationFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="image_url" className="font-bold uppercase text-xs tracking-wide">URL исходного изображения</Label>
-            <input
-              id="image_url"
-              type="url"
-              placeholder="https://example.com/image.jpg"
-              value={imageUrl}
-              onChange={e => setImageUrl(e.target.value)}
-              required
-              className="w-full border-2 border-black rounded-none px-3 py-2 text-sm focus:outline-none focus:border-[#FF2D78]"
-            />
+            <Label className="font-bold uppercase text-xs tracking-wide">Исходное изображение</Label>
+            {preview ? (
+              <div className="relative border-2 border-black">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={preview} alt="Превью" className="w-full max-h-64 object-contain bg-gray-50" />
+                <button
+                  type="button"
+                  onClick={handleRemoveFile}
+                  className="absolute top-2 right-2 bg-white border-2 border-black p-1 hover:bg-[#FF2D78] hover:text-white transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-black p-8 cursor-pointer hover:bg-gray-50 transition-colors">
+                <Upload className="h-8 w-8 text-gray-400" />
+                <span className="text-sm font-bold uppercase tracking-wide">Выберите файл</span>
+                <span className="text-xs text-muted-foreground">PNG, JPG, WEBP до 10 МБ</span>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="sr-only"
+                  required
+                />
+              </label>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -114,10 +169,15 @@ export function EditGenerationForm({ models }: EditGenerationFormProps) {
 
           <button
             type="submit"
-            disabled={loading || !prompt.trim() || !imageUrl.trim()}
+            disabled={isSubmitting || !prompt.trim() || !file}
             className="w-full py-3 font-black uppercase tracking-wide text-sm bg-[#FF2D78] text-white border-2 border-black shadow-[4px_4px_0px_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-transform disabled:opacity-50 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0"
           >
-            {loading ? (
+            {uploading ? (
+              <span className="flex items-center justify-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Загрузка файла...
+              </span>
+            ) : loading ? (
               <span className="flex items-center justify-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Отправка...
