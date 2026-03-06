@@ -33,8 +33,19 @@ export default function LandingPage() {
         <Pricing />
       </main>
       <footer className="border-t-4 border-black py-8 text-center text-sm font-medium bg-[#FFFDF5]">
-        <div className="container">
+        <div className="container flex flex-col items-center gap-3">
           <p>© 2025 ИИ Генератор. Все права защищены.</p>
+          <div className="flex items-center gap-2">
+            <span>Связаться с автором:</span>
+            <a
+              href="https://kwork.ru/user/anastasia9919"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-1.5 text-sm font-bold border-2 border-black bg-[#FF2D78] text-white shadow-[3px_3px_0px_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-transform inline-block"
+            >
+              Kwork
+            </a>
+          </div>
         </div>
       </footer>
     </div>
