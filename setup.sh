@@ -110,7 +110,8 @@ read_var() {
     fi
   done
 
-  eval "$var_name='$value'"
+  # printf -v безопасен для значений со спецсимволами (@, $, !, ', пробелы)
+  printf -v "$var_name" '%s' "$value"
 }
 
 read_var "NEXT_PUBLIC_SUPABASE_URL (напр. https://xxx.supabase.co)" SUPABASE_URL
@@ -126,17 +127,19 @@ read_var "YOOKASSA_RETURN_URL (напр. ${APP_URL}/billing/success)" YOOKASSA_R
 read_var "WAVESPEED_API_KEY" WAVESPEED_API_KEY
 
 info "Создание файла .env.local..."
-cat > "$APP_DIR/.env.local" <<EOF
-NEXT_PUBLIC_SUPABASE_URL=${SUPABASE_URL}
-NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
-SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
-REDIS_URL=${REDIS_URL}
-YOOKASSA_SHOP_ID=${YOOKASSA_SHOP_ID}
-YOOKASSA_SECRET_KEY=${YOOKASSA_SECRET_KEY}
-YOOKASSA_RETURN_URL=${YOOKASSA_RETURN_URL}
-WAVESPEED_API_KEY=${WAVESPEED_API_KEY}
-NEXT_PUBLIC_APP_URL=${APP_URL}
-EOF
+# Используем printf '%s\n' чтобы значения записывались буквально,
+# без интерпретации $ и других спецсимволов bash
+{
+  printf 'NEXT_PUBLIC_SUPABASE_URL=%s\n'    "$SUPABASE_URL"
+  printf 'NEXT_PUBLIC_SUPABASE_ANON_KEY=%s\n' "$SUPABASE_ANON_KEY"
+  printf 'SUPABASE_SERVICE_ROLE_KEY=%s\n'   "$SUPABASE_SERVICE_ROLE_KEY"
+  printf 'REDIS_URL=%s\n'                   "$REDIS_URL"
+  printf 'YOOKASSA_SHOP_ID=%s\n'            "$YOOKASSA_SHOP_ID"
+  printf 'YOOKASSA_SECRET_KEY=%s\n'         "$YOOKASSA_SECRET_KEY"
+  printf 'YOOKASSA_RETURN_URL=%s\n'         "$YOOKASSA_RETURN_URL"
+  printf 'WAVESPEED_API_KEY=%s\n'           "$WAVESPEED_API_KEY"
+  printf 'NEXT_PUBLIC_APP_URL=%s\n'         "$APP_URL"
+} > "$APP_DIR/.env.local"
 chmod 600 "$APP_DIR/.env.local"
 success ".env.local создан"
 
