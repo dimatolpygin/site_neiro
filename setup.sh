@@ -190,8 +190,9 @@ success "ecosystem.config.js создан"
 info "Запуск приложения через PM2..."
 pm2 delete all 2>/dev/null || true
 pm2 start "$APP_DIR/ecosystem.config.js"
-pm2 startup systemd -u root --hp /root | tail -1 | bash
-pm2 save
+# Запуск от root: pm2 startup настраивает systemd напрямую, pipe в bash не нужен
+pm2 startup systemd -u root --hp /root || true
+pm2 save --force
 success "PM2 запущен и добавлен в автозапуск"
 
 # ------------------------------------------------------------
