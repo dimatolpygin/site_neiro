@@ -1,22 +1,20 @@
 module.exports = {
   apps: [
     {
-      name: "nextjs",
-      script: "node_modules/next/dist/bin/next",
-      args: "start",
-      interpreter: "node",
-      env: {
-        NODE_ENV: "production",
-        PORT: 3000,
-      },
+      name: 'next-app',
+      script: 'node_modules/.bin/next',
+      args: 'start',
+      cwd: '/var/www/app',
+      env_file: '/var/www/app/.env.local',
+      max_memory_restart: '512M',
     },
     {
-      name: "worker",
-      script: "worker-dist/worker/index.js",
-      interpreter: "node",
-      env: {
-        NODE_ENV: "production",
-      },
+      name: 'worker',
+      script: 'node_modules/.bin/tsx',
+      args: 'worker/index.ts',
+      cwd: '/var/www/app',
+      env_file: '/var/www/app/.env.local',
+      max_memory_restart: '256M',
     },
   ],
-};
+}
