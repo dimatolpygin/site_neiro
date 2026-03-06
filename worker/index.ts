@@ -95,7 +95,12 @@ async function processJob(job: Job<GenerationJob>) {
   try {
     let input: object;
 
-    if (type === 'image') {
+    if (type === 'image' && parameters.image_url) {
+      input = {
+        image: parameters.image_url as string,
+        prompt,
+      };
+    } else if (type === 'image') {
       const w = (parameters.width as number) ?? 1024;
       const h = (parameters.height as number) ?? 1024;
       input = {

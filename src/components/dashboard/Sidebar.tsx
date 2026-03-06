@@ -12,11 +12,13 @@ import {
   CreditCard,
   LogOut,
   Shield,
+  Wand2,
 } from 'lucide-react';
 
 const navItems = [
   { href: '/dashboard', label: 'Обзор', icon: LayoutDashboard },
   { href: '/generate/image', label: 'Изображения', icon: ImageIcon },
+  { href: '/generate/edit', label: 'Редактор фото', icon: Wand2 },
   { href: '/generate/video', label: 'Видео', icon: Video },
   { href: '/history', label: 'История', icon: History },
   { href: '/billing', label: 'Баланс и оплата', icon: CreditCard },

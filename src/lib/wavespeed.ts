@@ -82,6 +82,25 @@ export async function generateImage(params: GenerateImageParams): Promise<string
   return result.outputs[0];
 }
 
+export async function editImage(params: { model: string; imageUrl: string; prompt: string }): Promise<string> {
+  const prediction = await apiCall(params.model, {
+    image: params.imageUrl,
+    prompt: params.prompt,
+  });
+
+  let result = prediction;
+  while (result.status !== 'completed' && result.status !== 'failed') {
+    await new Promise(r => setTimeout(r, 2000));
+    result = await getResult(result.id);
+  }
+
+  if (result.status === 'failed' || !result.outputs?.length) {
+    throw new Error(result.error || 'Edit failed');
+  }
+
+  return result.outputs[0];
+}
+
 export async function generateVideo(params: GenerateVideoParams): Promise<string> {
   const prediction = await apiCall(params.model, {
     prompt: params.prompt,
