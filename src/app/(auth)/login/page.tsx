@@ -4,10 +4,6 @@ import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function LoginPage() {
   return (
@@ -46,57 +42,62 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <Link href="/" className="text-xl font-bold text-primary mb-2 block">
-            AI Generator
+    <div className="min-h-screen flex items-center justify-center p-4 bg-[#FFE600]">
+      <div className="w-full max-w-md bg-white border-4 border-black shadow-[8px_8px_0px_#000] rounded-none">
+        <div className="p-8 border-b-4 border-black text-center">
+          <Link href="/" className="text-2xl font-black uppercase tracking-tight text-black mb-2 block">
+            ИИ Генератор
           </Link>
-          <CardTitle>Вход в аккаунт</CardTitle>
-          <CardDescription>Введите email и пароль для входа</CardDescription>
-        </CardHeader>
+          <h1 className="text-xl font-black uppercase tracking-tight text-black">Вход в аккаунт</h1>
+          <p className="text-sm font-medium text-black/60 mt-1">Введите email и пароль для входа</p>
+        </div>
         <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
+          <div className="p-8 space-y-4">
             {error && (
-              <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">{error}</div>
+              <div className="text-sm font-bold text-white bg-[#FF2D78] border-2 border-black p-3">{error}</div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
+              <label htmlFor="email" className="block text-xs font-black uppercase tracking-wide text-black">Email</label>
+              <input
                 id="email"
                 type="email"
                 placeholder="you@example.com"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
+                className="w-full px-3 py-2 border-2 border-black rounded-none focus:outline-none focus:border-[#FF2D78] font-medium"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Пароль</Label>
-              <Input
+              <label htmlFor="password" className="block text-xs font-black uppercase tracking-wide text-black">Пароль</label>
+              <input
                 id="password"
                 type="password"
                 placeholder="••••••••"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
+                className="w-full px-3 py-2 border-2 border-black rounded-none focus:outline-none focus:border-[#FF2D78] font-medium"
               />
             </div>
-          </CardContent>
-          <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full" disabled={loading}>
+          </div>
+          <div className="px-8 pb-8 flex flex-col gap-4">
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 font-black uppercase tracking-wide text-sm bg-black text-white border-2 border-black shadow-[4px_4px_0px_#FF2D78] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-transform disabled:opacity-50 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0"
+            >
               {loading ? 'Вход...' : 'Войти'}
-            </Button>
-            <p className="text-sm text-muted-foreground text-center">
+            </button>
+            <p className="text-sm font-medium text-center text-black">
               Нет аккаунта?{' '}
-              <Link href="/register" className="text-primary hover:underline">
+              <Link href="/register" className="font-black underline hover:text-[#FF2D78] transition-colors">
                 Зарегистрироваться
               </Link>
             </p>
-          </CardFooter>
+          </div>
         </form>
-      </Card>
+      </div>
     </div>
   );
 }
-

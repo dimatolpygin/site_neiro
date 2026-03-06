@@ -2,11 +2,9 @@
 
 import { useState } from 'react';
 import type { ModelPricing } from '@/types/database';
-import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { GenerationStatusPoller } from './GenerationStatusPoller';
 import { kopecksToRubles } from '@/lib/utils/currency';
 import { Loader2 } from 'lucide-react';
@@ -75,23 +73,23 @@ export function ImageGenerationForm({ models }: ImageGenerationFormProps) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Генерация изображения</CardTitle>
-      </CardHeader>
-      <CardContent>
+    <div className="bg-white border-2 border-black shadow-[6px_6px_0px_#000] rounded-none">
+      <div className="p-6 border-b-2 border-black">
+        <h2 className="text-xl font-black uppercase tracking-tight text-black">Генерация изображения</h2>
+      </div>
+      <div className="p-6">
         <form onSubmit={handleSubmit} className="space-y-5">
           {error && (
-            <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">{error}</div>
+            <div className="text-sm font-bold text-white bg-[#FF2D78] border-2 border-black p-3">{error}</div>
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="model">Модель</Label>
+            <Label className="font-bold uppercase text-xs tracking-wide">Модель</Label>
             <Select value={modelId} onValueChange={setModelId}>
-              <SelectTrigger>
+              <SelectTrigger className="border-2 border-black rounded-none focus:ring-0 focus:border-[#FF2D78]">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="border-2 border-black rounded-none">
                 {models.map(m => (
                   <SelectItem key={m.model_id} value={m.model_id}>
                     {m.display_name} — {kopecksToRubles(m.cost_kopecks)}
@@ -102,12 +100,12 @@ export function ImageGenerationForm({ models }: ImageGenerationFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="size">Размер</Label>
+            <Label className="font-bold uppercase text-xs tracking-wide">Размер</Label>
             <Select value={sizeKey} onValueChange={setSizeKey}>
-              <SelectTrigger>
+              <SelectTrigger className="border-2 border-black rounded-none focus:ring-0 focus:border-[#FF2D78]">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="border-2 border-black rounded-none">
                 {SIZE_OPTIONS.map(s => (
                   <SelectItem key={`${s.width}x${s.height}`} value={`${s.width}x${s.height}`}>
                     {s.label}
@@ -118,29 +116,34 @@ export function ImageGenerationForm({ models }: ImageGenerationFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="prompt">Промпт</Label>
+            <Label htmlFor="prompt" className="font-bold uppercase text-xs tracking-wide">Промпт</Label>
             <Textarea
               id="prompt"
-              placeholder="Describe the image you want to generate..."
+              placeholder="Опишите изображение, которое хотите создать..."
               value={prompt}
               onChange={e => setPrompt(e.target.value)}
               rows={4}
               required
+              className="border-2 border-black rounded-none focus:ring-0 focus:border-[#FF2D78] resize-none"
             />
           </div>
 
-          <Button type="submit" disabled={loading || !prompt.trim()} className="w-full">
+          <button
+            type="submit"
+            disabled={loading || !prompt.trim()}
+            className="w-full py-3 font-black uppercase tracking-wide text-sm bg-[#FF2D78] text-white border-2 border-black shadow-[4px_4px_0px_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-transform disabled:opacity-50 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0"
+          >
             {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <span className="flex items-center justify-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
                 Отправка...
-              </>
+              </span>
             ) : (
               `Сгенерировать за ${selectedModel ? kopecksToRubles(selectedModel.cost_kopecks) : '...'}`
             )}
-          </Button>
+          </button>
         </form>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

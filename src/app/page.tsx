@@ -1,26 +1,29 @@
 import { Hero } from '@/components/landing/Hero';
 import { Features } from '@/components/landing/Features';
 import { Pricing } from '@/components/landing/Pricing';
-import { ThemeToggle } from '@/components/ThemeToggle';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
+    <div className="min-h-screen bg-[#FFFDF5]">
+      <header className="sticky top-0 z-50 bg-[#FFFDF5] border-b-4 border-black">
         <div className="container flex h-16 items-center justify-between">
-          <Link href="/" className="text-xl font-bold text-primary">
-            AI Generator
+          <Link href="/" className="text-xl font-black uppercase tracking-tight text-black">
+            ИИ Генератор
           </Link>
-          <nav className="flex items-center gap-4">
-            <ThemeToggle />
-            <Button variant="ghost" asChild>
-              <Link href="/login">Войти</Link>
-            </Button>
-            <Button asChild>
-              <Link href="/register">Начать бесплатно</Link>
-            </Button>
+          <nav className="flex items-center gap-3">
+            <Link
+              href="/login"
+              className="px-4 py-2 text-sm font-bold border-2 border-black bg-white shadow-[3px_3px_0px_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-transform"
+            >
+              Войти
+            </Link>
+            <Link
+              href="/register"
+              className="px-4 py-2 text-sm font-bold border-2 border-black bg-black text-white shadow-[3px_3px_0px_#FF2D78] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-transform"
+            >
+              Начать бесплатно
+            </Link>
           </nav>
         </div>
       </header>
@@ -29,9 +32,9 @@ export default function LandingPage() {
         <Features />
         <Pricing />
       </main>
-      <footer className="border-t py-8 text-center text-sm text-muted-foreground">
+      <footer className="border-t-4 border-black py-8 text-center text-sm font-medium bg-[#FFFDF5]">
         <div className="container">
-          <p>© 2025 AI Generator. Все права защищены.</p>
+          <p>© 2025 ИИ Генератор. Все права защищены.</p>
         </div>
       </footer>
     </div>
