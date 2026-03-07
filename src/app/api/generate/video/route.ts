@@ -8,8 +8,12 @@ import { z } from 'zod';
 const schema = z.object({
   model: z.string().min(1),
   prompt: z.string().min(1).max(2000),
-  duration: z.number().int().min(3).max(12).optional().default(5),
+  duration: z.number().int().min(1).max(30).optional().default(5),
   size: z.string().optional(),
+  image_url: z.string().url().optional(),
+  aspect_ratio: z.string().optional(),
+  sound: z.boolean().optional(),
+  quality: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -26,7 +30,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }
 
-  const { model, prompt, duration, size } = parsed.data;
+  const { model, prompt, duration, size, image_url, aspect_ratio, sound, quality } = parsed.data;
 
   const rateKey = `ratelimit:gen:${user.id}`;
   const rateResult = await checkRateLimit(rateKey, 5, 60);
@@ -52,6 +56,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Model not found' }, { status: 404 });
   }
 
+  const parameters: Record<string, unknown> = {
+    model, duration,
+    ...(size ? { size } : {}),
+    ...(image_url ? { image_url } : {}),
+    ...(aspect_ratio ? { aspect_ratio } : {}),
+    ...(sound !== undefined ? { sound } : {}),
+    ...(quality ? { quality } : {}),
+  };
+
   const { data: genData, error: genError } = await admin
     .from('generations')
     .insert({
@@ -59,7 +72,7 @@ export async function POST(req: NextRequest) {
       type: 'video',
       status: 'pending',
       prompt,
-      parameters: { model, duration, ...(size ? { size } : {}) },
+      parameters,
       cost_kopecks: modelPricing.cost_kopecks,
     } as never)
     .select()
@@ -92,7 +105,7 @@ export async function POST(req: NextRequest) {
     type: 'video',
     model,
     prompt,
-    parameters: { duration, ...(size ? { size } : {}) },
+    parameters,
   });
 
   return NextResponse.json({ generationId: generation.id });

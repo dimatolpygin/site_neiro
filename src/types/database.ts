@@ -55,7 +55,8 @@ export interface ModelPricing {
 }
 
 export interface ModelSize { label: string; value: string; }
-export interface ModelQuality { label: string; value: string; }
+export interface ModelQuality { label: string; value: string; cost_kopecks?: number; }
+export interface ModelDuration { label: string; value: number; }
 
 export interface Model {
   id: string;
@@ -68,6 +69,7 @@ export interface Model {
   supports_image_input: boolean;
   available_sizes: ModelSize[];
   available_quality: ModelQuality[];
+  available_durations: ModelDuration[];
   templates: string[];
   preview_url: string | null;
   is_active: boolean;

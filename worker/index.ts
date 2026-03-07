@@ -97,30 +97,58 @@ async function processJob(job: Job<GenerationJob>) {
 
     if (type === 'image') {
       const imageUrl = parameters.image_url as string | undefined;
-      if (imageUrl) {
-        input = { prompt, image: imageUrl };
-      } else {
+      const quality = parameters.quality as string | undefined;
+      const aspectRatio = parameters.aspect_ratio as string | undefined;
+      const size = parameters.size as string | undefined;
+
+      if (model.includes('flux-2-max')) {
+        input = { images: imageUrl ? [imageUrl] : [], prompt, size: size ?? '1024*1024' };
+      } else if (model.includes('gpt-image-1.5')) {
+        input = { images: imageUrl ? [imageUrl] : [], prompt, size: size ?? '1024*1024', quality: quality ?? 'medium' };
+      } else if (model.includes('nano-banana')) {
+        const resolution = quality ?? '1k';
+        input = { prompt, image: imageUrl, aspect_ratio: aspectRatio, resolution };
+      } else if (model.includes('seedream')) {
         const w = (parameters.width as number) ?? 1024;
         const h = (parameters.height as number) ?? 1024;
-        input = {
-          prompt,
-          size: `${w}*${h}`,
-          num_inference_steps: 28,
-          guidance_scale: 3.5,
-        };
+        input = { prompt, size: `${w}*${h}` };
+      } else {
+        // FLUX Dev и другие image T2I
+        if (imageUrl) {
+          input = { prompt, image: imageUrl };
+        } else {
+          const w = (parameters.width as number) ?? 1024;
+          const h = (parameters.height as number) ?? 1024;
+          input = { prompt, size: `${w}*${h}`, num_inference_steps: 28, guidance_scale: 3.5 };
+        }
       }
     } else {
       // Video: строим input в зависимости от модели
       const duration = (parameters.duration as number) ?? 5;
-      const size = parameters.size as string | undefined;
+      const imageUrl = parameters.image_url as string | undefined;
+      const aspectRatio = parameters.aspect_ratio as string | undefined;
+      const quality = parameters.quality as string | undefined;
 
       if (model.includes('sora-2')) {
         // Sora 2: duration строго из [4, 8, 12]с
         const soraDur = ([4, 8, 12] as number[]).includes(duration) ? duration : 4;
-        input = { prompt, size: size ?? '1280*720', duration: soraDur };
+        if (model.includes('image-to-video')) {
+          input = { prompt, image: imageUrl, duration: soraDur };
+        } else {
+          input = { prompt, size: (parameters.size as string) ?? '1280*720', duration: soraDur };
+        }
+      } else if (model.includes('seedance')) {
+        const resolution = quality ?? '720p';
+        input = {
+          prompt, image: imageUrl, duration, resolution, generate_audio: true,
+          ...(aspectRatio ? { aspect_ratio: aspectRatio } : {}),
+        };
+      } else if (model.includes('kling-video-o3-pro')) {
+        const sound = (parameters.sound as boolean) ?? false;
+        input = { prompt, image: imageUrl, duration, sound, element_list: [], multi_prompt: [] };
       } else {
-        // Wan 2.1, Kling v2.0, Kling v2.1 — стандартный input
-        input = { prompt, duration };
+        // kling-v2.6-std, kling-v2.0, kling-v2.1 — стандарт
+        input = { prompt, image: imageUrl, duration };
       }
     }
 
