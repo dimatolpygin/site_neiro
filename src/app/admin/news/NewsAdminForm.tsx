@@ -27,11 +27,11 @@ const empty: FormData = {
 const FIELDS: [keyof FormData, string, boolean][] = [
   ['title', 'Заголовок *', true],
   ['slug', 'Slug (URL) *', true],
-  ['description', 'Описание *', true],
-  ['content', 'Контент (опционально)', false],
-  ['image_url', 'URL изображения', false],
-  ['model_slug', 'Slug модели', false],
+  ['description', 'Лид / краткое описание *', true],
+  ['image_url', 'URL обложки (фото)', false],
+  ['model_slug', 'Slug модели (для кнопки)', false],
   ['tags', 'Теги (через запятую)', false],
+  ['content', 'Текст статьи (Markdown)', false],
 ];
 
 function NewsForm({
@@ -81,12 +81,24 @@ function NewsForm({
 
   return (
     <div className="border-2 border-black shadow-[4px_4px_0px_#000] p-6 bg-white dark:bg-zinc-900 mb-4">
-      <h2 className="text-lg font-black mb-4">{id ? 'Редактировать новость' : 'Новая новость'}</h2>
+      <h2 className="text-lg font-black mb-1">{id ? 'Редактировать новость' : 'Новая новость'}</h2>
+      <p className="text-xs text-muted-foreground mb-4">
+        Текст статьи поддерживает <strong>Markdown</strong>: **жирный**, *курсив*, ## Заголовок, ![alt](url_фото), [YouTube](url_видео), [видео.mp4](url_mp4)
+      </p>
       <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {FIELDS.map(([field, label, req]) => (
           <div key={field} className={field === 'description' || field === 'content' ? 'md:col-span-2' : ''}>
             <label className="block text-xs font-bold mb-1 uppercase">{label}</label>
-            {field === 'content' || field === 'description' ? (
+            {field === 'content' ? (
+              <textarea
+                value={form[field]}
+                onChange={e => set(field, e.target.value)}
+                required={req}
+                rows={16}
+                placeholder={'## Введение\n\nТекст статьи...\n\n![Описание фото](https://example.com/photo.jpg)\n\n[Смотреть видео](https://youtu.be/VIDEO_ID)'}
+                className="w-full border-2 border-black dark:border-zinc-600 px-3 py-2 text-sm font-mono bg-white dark:bg-zinc-800"
+              />
+            ) : field === 'description' ? (
               <textarea
                 value={form[field]}
                 onChange={e => set(field, e.target.value)}
