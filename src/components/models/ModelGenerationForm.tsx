@@ -25,7 +25,7 @@ export function ModelGenerationForm({ model }: ModelGenerationFormProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isAspectRatioModel = model.endpoint.includes('nano-banana') || model.endpoint.includes('seedance');
-  const isSizeStringModel = model.endpoint.includes('flux-2-max') || model.endpoint.includes('gpt-image-1.5');
+  const isSizeStringModel = model.endpoint.includes('flux-2-max') || model.endpoint.includes('gpt-image-1.5') || model.endpoint.includes('seedream');
   const hasSound = model.endpoint.includes('kling-video-o3-pro');
 
   const currentCost = useMemo(() => {

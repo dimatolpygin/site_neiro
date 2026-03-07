@@ -109,9 +109,8 @@ async function processJob(job: Job<GenerationJob>) {
         const resolution = quality ?? '1k';
         input = { prompt, image: imageUrl, aspect_ratio: aspectRatio, resolution };
       } else if (model.includes('seedream')) {
-        const w = (parameters.width as number) ?? 1024;
-        const h = (parameters.height as number) ?? 1024;
-        input = { prompt, size: `${w}*${h}` };
+        if (!imageUrl) throw new Error('Seedream требует исходное изображение');
+        input = { images: [imageUrl], prompt, size: size ?? '2048*2048' };
       } else {
         // FLUX Dev и другие image T2I
         if (imageUrl) {
@@ -133,6 +132,7 @@ async function processJob(job: Job<GenerationJob>) {
         // Sora 2: duration строго из [4, 8, 12]с
         const soraDur = ([4, 8, 12] as number[]).includes(duration) ? duration : 4;
         if (model.includes('image-to-video')) {
+          if (!imageUrl) throw new Error('Sora i2v требует исходное изображение');
           input = { prompt, image: imageUrl, duration: soraDur };
         } else {
           input = { prompt, size: (parameters.size as string) ?? '1280*720', duration: soraDur };
@@ -144,10 +144,12 @@ async function processJob(job: Job<GenerationJob>) {
           ...(aspectRatio ? { aspect_ratio: aspectRatio } : {}),
         };
       } else if (model.includes('kling-video-o3-pro')) {
+        if (!imageUrl) throw new Error('Kling Omni O3 Pro требует исходное изображение');
         const sound = (parameters.sound as boolean) ?? false;
         input = { prompt, image: imageUrl, duration, sound, element_list: [], multi_prompt: [] };
       } else {
         // kling-v2.6-std, kling-v2.0, kling-v2.1 — стандарт
+        if (!imageUrl) throw new Error('Модель требует исходное изображение');
         input = { prompt, image: imageUrl, duration };
       }
     }
@@ -169,53 +171,58 @@ async function processJob(job: Job<GenerationJob>) {
     console.log(`Job ${generationId} completed: ${resultUrl}`);
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-    console.error(`Job ${generationId} failed:`, errorMessage);
+    console.error(`Job ${generationId} failed (attempt ${job.attemptsMade}):`, errorMessage);
 
-    await supabase
-      .from('generations')
-      .update({ status: 'failed', error_message: errorMessage } as never)
-      .eq('id', generationId);
+    // Финальная попытка — помечаем как failed и делаем возврат средств
+    const isFinalAttempt = job.attemptsMade >= (job.opts.attempts ?? 1);
+    if (isFinalAttempt) {
+      await supabase
+        .from('generations')
+        .update({ status: 'failed', error_message: errorMessage } as never)
+        .eq('id', generationId);
 
-    // Refund
-    const { data: genData } = await supabase
-      .from('generations')
-      .select('cost_kopecks')
-      .eq('id', generationId)
-      .single();
-
-    const generation = genData as Generation | null;
-
-    if (generation) {
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('balance')
-        .eq('id', userId)
+      // Refund
+      const { data: genData } = await supabase
+        .from('generations')
+        .select('cost_kopecks')
+        .eq('id', generationId)
         .single();
 
-      const profile = profileData as Profile | null;
+      const generation = genData as Generation | null;
 
-      if (profile) {
-        const newBalance = profile.balance + generation.cost_kopecks;
-        await supabase
+      if (generation) {
+        const { data: profileData } = await supabase
           .from('profiles')
-          .update({ balance: newBalance } as never)
-          .eq('id', userId);
+          .select('balance')
+          .eq('id', userId)
+          .single();
 
-        await supabase.from('transactions').insert({
-          user_id: userId,
-          type: 'refund',
-          status: 'completed',
-          amount_kopecks: generation.cost_kopecks,
-          balance_before: profile.balance,
-          balance_after: newBalance,
-          description: 'Возврат за неудачную генерацию',
-          generation_id: generationId,
-        } as never);
+        const profile = profileData as Profile | null;
+
+        if (profile) {
+          const newBalance = profile.balance + generation.cost_kopecks;
+          await supabase
+            .from('profiles')
+            .update({ balance: newBalance } as never)
+            .eq('id', userId);
+
+          await supabase.from('transactions').insert({
+            user_id: userId,
+            type: 'refund',
+            status: 'completed',
+            amount_kopecks: generation.cost_kopecks,
+            balance_before: profile.balance,
+            balance_after: newBalance,
+            description: 'Возврат за неудачную генерацию',
+            generation_id: generationId,
+          } as never);
+        }
       }
-    }
 
-    const cacheData = { status: 'failed', resultUrl: null, errorMessage };
-    await redis.setex(`gen:result:${generationId}`, 3600, JSON.stringify(cacheData));
+      const cacheData = { status: 'failed', resultUrl: null, errorMessage };
+      await redis.setex(`gen:result:${generationId}`, 3600, JSON.stringify(cacheData));
+    }
+    // На промежуточных попытках не трогаем DB/redis — BullMQ ретраит, статус остаётся 'processing'
 
     throw err;
   }
