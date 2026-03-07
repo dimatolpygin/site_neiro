@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import type { Generation } from '@/types/database';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,6 +22,15 @@ interface GenerationHistoryTableProps {
 }
 
 export function GenerationHistoryTable({ generations }: GenerationHistoryTableProps) {
+  const router = useRouter();
+  const hasPending = generations.some(g => g.status === 'pending' || g.status === 'processing');
+
+  useEffect(() => {
+    if (!hasPending) return;
+    const timer = setInterval(() => router.refresh(), 5000);
+    return () => clearInterval(timer);
+  }, [hasPending, router]);
+
   if (generations.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">

@@ -115,14 +115,11 @@ async function processJob(job: Job<GenerationJob>) {
       const size = parameters.size as string | undefined;
 
       if (model.includes('sora-2')) {
-        // Sora 2: duration фиксированно 4/8/12с
+        // Sora 2: duration строго из [4, 8, 12]с
         const soraDur = ([4, 8, 12] as number[]).includes(duration) ? duration : 4;
         input = { prompt, size: size ?? '1280*720', duration: soraDur };
-      } else if (model.includes('kling-v2.6') || model.includes('kling-v2-6')) {
-        // Kling 2.6 Pro: aspect_ratio вместо size
-        input = { prompt, aspect_ratio: size ?? '16:9', duration, sound: false };
       } else {
-        // Wan T2V, Kling 2.0 и другие — стандарт
+        // Wan 2.1, Kling v2.0, Kling v2.1 — стандартный input
         input = { prompt, duration };
       }
     }
