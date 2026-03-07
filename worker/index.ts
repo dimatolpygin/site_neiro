@@ -97,7 +97,7 @@ async function processJob(job: Job<GenerationJob>) {
 
     if (type === 'image' && parameters.image_url) {
       input = {
-        image: parameters.image_url as string,
+        images: [parameters.image_url as string],
         prompt,
       };
     } else if (type === 'image') {

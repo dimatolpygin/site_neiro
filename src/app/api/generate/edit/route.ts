@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient, createServiceClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { checkRateLimit } from '@/lib/utils/rateLimit';
 import { addGenerationJob } from '@/lib/queue/producer';
 import type { ModelPricing, Generation } from '@/types/database';
@@ -43,15 +43,13 @@ export async function POST(req: NextRequest) {
     .eq('is_active', true)
     .single();
 
-  const admin = createServiceClient();
-
   const modelPricing = modelData as ModelPricing | null;
 
   if (!modelPricing) {
     return NextResponse.json({ error: 'Model not found' }, { status: 404 });
   }
 
-  const { data: genData, error: genError } = await admin
+  const { data: genData, error: genError } = await supabase
     .from('generations')
     .insert({
       user_id: user.id,
@@ -70,7 +68,7 @@ export async function POST(req: NextRequest) {
 
   const generation = genData as Generation;
 
-  const { data: deducted } = await admin.rpc('deduct_balance', {
+  const { data: deducted } = await supabase.rpc('deduct_balance', {
     p_user_id: user.id,
     p_amount: modelPricing.cost_kopecks,
     p_generation_id: generation.id,
@@ -78,7 +76,7 @@ export async function POST(req: NextRequest) {
   } as never);
 
   if (!deducted) {
-    await admin
+    await supabase
       .from('generations')
       .update({ status: 'failed', error_message: 'Insufficient balance' } as never)
       .eq('id', generation.id);
