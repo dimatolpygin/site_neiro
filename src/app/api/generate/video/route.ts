@@ -8,7 +8,8 @@ import { z } from 'zod';
 const schema = z.object({
   model: z.string().min(1),
   prompt: z.string().min(1).max(2000),
-  duration: z.number().int().min(3).max(10).optional().default(5),
+  duration: z.number().int().min(3).max(12).optional().default(5),
+  size: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -25,7 +26,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }
 
-  const { model, prompt, duration } = parsed.data;
+  const { model, prompt, duration, size } = parsed.data;
 
   const rateKey = `ratelimit:gen:${user.id}`;
   const rateResult = await checkRateLimit(rateKey, 5, 60);
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
       type: 'video',
       status: 'pending',
       prompt,
-      parameters: { model, duration },
+      parameters: { model, duration, ...(size ? { size } : {}) },
       cost_kopecks: modelPricing.cost_kopecks,
     } as never)
     .select()
@@ -91,7 +92,7 @@ export async function POST(req: NextRequest) {
     type: 'video',
     model,
     prompt,
-    parameters: { duration },
+    parameters: { duration, ...(size ? { size } : {}) },
   });
 
   return NextResponse.json({ generationId: generation.id });

@@ -68,6 +68,7 @@ export function ModelGenerationForm({ model }: ModelGenerationFormProps) {
 
       if (model.type === 'video') {
         body.duration = 5;
+        if (selectedSize) body.size = selectedSize;
       } else if (selectedSize) {
         const [w, h] = selectedSize.split('*').map(Number);
         if (w && h) { body.width = w; body.height = h; }
