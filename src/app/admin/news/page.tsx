@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import type { News } from '@/types/database';
-import { NewsAdminForm } from './NewsAdminForm';
+import { NewsAdminForm, NewsEditButton } from './NewsAdminForm';
 
 async function toggleNews(id: string, current: boolean) {
   'use server';
@@ -54,6 +54,7 @@ export default async function AdminNewsPage() {
               <p className="text-xs text-muted-foreground truncate">/news → slug: {item.slug}</p>
             </div>
             <div className="flex gap-2 shrink-0">
+              <NewsEditButton news={item} />
               <form action={toggleNews.bind(null, item.id, item.is_active)}>
                 <button
                   type="submit"

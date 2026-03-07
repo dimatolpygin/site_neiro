@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import type { News } from '@/types/database';
 
 interface FormData {
   slug: string;
@@ -23,12 +24,29 @@ const empty: FormData = {
   tags: '',
 };
 
-export function NewsAdminForm() {
+const FIELDS: [keyof FormData, string, boolean][] = [
+  ['title', 'Заголовок *', true],
+  ['slug', 'Slug (URL) *', true],
+  ['description', 'Описание *', true],
+  ['content', 'Контент (опционально)', false],
+  ['image_url', 'URL изображения', false],
+  ['model_slug', 'Slug модели', false],
+  ['tags', 'Теги (через запятую)', false],
+];
+
+function NewsForm({
+  initial,
+  id,
+  onClose,
+}: {
+  initial: FormData;
+  id?: string;
+  onClose: () => void;
+}) {
   const router = useRouter();
-  const [form, setForm] = useState<FormData>(empty);
+  const [form, setForm] = useState<FormData>(initial);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [open, setOpen] = useState(false);
 
   function set(field: keyof FormData, value: string) {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -40,9 +58,10 @@ export function NewsAdminForm() {
     setError('');
     try {
       const res = await fetch('/api/admin/news', {
-        method: 'POST',
+        method: id ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          id,
           ...form,
           tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
         }),
@@ -51,8 +70,7 @@ export function NewsAdminForm() {
         const d = await res.json();
         throw new Error(d.error || 'Ошибка сервера');
       }
-      setForm(empty);
-      setOpen(false);
+      onClose();
       router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Неизвестная ошибка');
@@ -61,30 +79,11 @@ export function NewsAdminForm() {
     }
   }
 
-  if (!open) {
-    return (
-      <button
-        onClick={() => setOpen(true)}
-        className="border-2 border-black font-bold px-4 py-2 bg-[#FFE600] shadow-[3px_3px_0px_#000] hover:shadow-none transition-all"
-      >
-        + Добавить новость
-      </button>
-    );
-  }
-
   return (
-    <div className="border-2 border-black shadow-[4px_4px_0px_#000] p-6 bg-white dark:bg-zinc-900 mb-6">
-      <h2 className="text-lg font-black mb-4">Новая новость</h2>
+    <div className="border-2 border-black shadow-[4px_4px_0px_#000] p-6 bg-white dark:bg-zinc-900 mb-4">
+      <h2 className="text-lg font-black mb-4">{id ? 'Редактировать новость' : 'Новая новость'}</h2>
       <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {([
-          ['title', 'Заголовок *', 'text', true],
-          ['slug', 'Slug (URL) *', 'text', true],
-          ['description', 'Описание *', 'text', true],
-          ['content', 'Контент (опционально)', 'text', false],
-          ['image_url', 'URL изображения', 'text', false],
-          ['model_slug', 'Slug модели', 'text', false],
-          ['tags', 'Теги (через запятую)', 'text', false],
-        ] as [keyof FormData, string, string, boolean][]).map(([field, label, type, req]) => (
+        {FIELDS.map(([field, label, req]) => (
           <div key={field} className={field === 'description' || field === 'content' ? 'md:col-span-2' : ''}>
             <label className="block text-xs font-bold mb-1 uppercase">{label}</label>
             {field === 'content' || field === 'description' ? (
@@ -97,7 +96,7 @@ export function NewsAdminForm() {
               />
             ) : (
               <input
-                type={type}
+                type="text"
                 value={form[field]}
                 onChange={e => set(field, e.target.value)}
                 required={req}
@@ -117,17 +116,65 @@ export function NewsAdminForm() {
             disabled={loading}
             className="border-2 border-black font-bold px-4 py-2 bg-[#FFE600] shadow-[3px_3px_0px_#000] hover:shadow-none transition-all disabled:opacity-50"
           >
-            {loading ? 'Сохранение...' : 'Создать'}
+            {loading ? 'Сохранение...' : id ? 'Сохранить' : 'Создать'}
           </button>
           <button
             type="button"
-            onClick={() => setOpen(false)}
-            className="border-2 border-black font-bold px-4 py-2 hover:bg-gray-100 transition-all"
+            onClick={onClose}
+            className="border-2 border-black font-bold px-4 py-2 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-all"
           >
             Отмена
           </button>
         </div>
       </form>
+    </div>
+  );
+}
+
+export function NewsAdminForm() {
+  const [open, setOpen] = useState(false);
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="border-2 border-black font-bold px-4 py-2 bg-[#FFE600] shadow-[3px_3px_0px_#000] hover:shadow-none transition-all"
+      >
+        + Добавить новость
+      </button>
+    );
+  }
+
+  return <NewsForm initial={empty} onClose={() => setOpen(false)} />;
+}
+
+export function NewsEditButton({ news }: { news: News }) {
+  const [open, setOpen] = useState(false);
+
+  const initial: FormData = {
+    slug: news.slug,
+    title: news.title,
+    description: news.description,
+    content: news.content ?? '',
+    image_url: news.image_url ?? '',
+    model_slug: news.model_slug ?? '',
+    tags: news.tags.join(', '),
+  };
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="text-xs font-bold border-2 border-black px-3 py-1 hover:bg-[#FFE600] transition-all"
+      >
+        Редактировать
+      </button>
+    );
+  }
+
+  return (
+    <div className="md:col-span-full">
+      <NewsForm initial={initial} id={news.id} onClose={() => setOpen(false)} />
     </div>
   );
 }
