@@ -13,10 +13,12 @@ import {
   LogOut,
   Shield,
   Wand2,
+  Store,
 } from 'lucide-react';
 
 const navItems = [
   { href: '/dashboard', label: 'Обзор', icon: LayoutDashboard },
+  { href: '/models', label: 'Маркетплейс', icon: Store },
   { href: '/generate/image', label: 'Изображения', icon: ImageIcon },
   { href: '/generate/edit', label: 'Редактор фото', icon: Wand2 },
   { href: '/generate/video', label: 'Видео', icon: Video },

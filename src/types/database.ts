@@ -54,6 +54,27 @@ export interface ModelPricing {
   is_active: boolean;
 }
 
+export interface ModelSize { label: string; value: string; }
+export interface ModelQuality { label: string; value: string; }
+
+export interface Model {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  type: 'image' | 'video' | 'edit';
+  endpoint: string;
+  cost_kopecks: number;
+  supports_image_input: boolean;
+  available_sizes: ModelSize[];
+  available_quality: ModelQuality[];
+  templates: string[];
+  preview_url: string | null;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+}
+
 export interface PricingPlan {
   id: string;
   name: string;
