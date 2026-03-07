@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Users, BarChart } from 'lucide-react';
+import { ArrowLeft, Users, BarChart, Newspaper } from 'lucide-react';
 import type { Profile } from '@/types/database';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -38,6 +38,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <Link href="/admin/users" className="flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-accent">
             <Users className="h-4 w-4" />
             Пользователи
+          </Link>
+          <Link href="/admin/news" className="flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-accent">
+            <Newspaper className="h-4 w-4" />
+            Новости
           </Link>
         </nav>
         <Button variant="ghost" className="w-full justify-start gap-3 mt-4" asChild>

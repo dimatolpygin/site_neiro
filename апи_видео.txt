@@ -1,0 +1,39 @@
+WaveSpeed Video API — правильные endpoints (проверено 2026-03)
+
+=== WAN (Alibaba) ===
+Wan 2.1 T2V 480p   → wavespeed-ai/wan-2.1/t2v-480p
+Wan 2.1 T2V 720p   → wavespeed-ai/wan-2.1/t2v-720p
+
+Input: { prompt: string, duration: number }
+Duration: 1–8 секунд (целое)
+
+=== Kling (ByteDance / kwaivgi) ===
+Kling V2.0 Master  → kwaivgi/kling-v2.0/t2v-master
+Kling V2.1 Master  → kwaivgi/kling-v2.1/t2v-master
+
+Input: { prompt: string, duration: number }
+Duration: 5 или 10 секунд
+
+ВАЖНО: Провайдер — kwaivgi, НЕ wavespeed-ai.
+
+=== Sora (OpenAI) ===
+Sora 2             → openai/sora-2/text-to-video
+
+Input: { prompt: string, size: string, duration: number }
+Size: "1280*720" (по умолчанию), "1920*1080", "720*1280" и др.
+Duration: строго 4, 8 или 12 секунд (остальные значения → 400 ошибка)
+
+Требует Silver-аккаунт WaveSpeed ($100+ пополнение).
+
+=== FLUX (изображения) ===
+FLUX Dev           → wavespeed-ai/flux-dev
+FLUX Dev img2img   → wavespeed-ai/flux-dev/image-to-image
+
+Input T2I: { prompt, size, num_inference_steps, guidance_scale }
+Input I2I: { prompt, image: url }
+
+=== Polling ===
+POST https://api.wavespeed.ai/api/v3/{endpoint}
+GET  https://api.wavespeed.ai/api/v3/predictions/{id}/result
+
+Статусы: queued → processing → completed / failed

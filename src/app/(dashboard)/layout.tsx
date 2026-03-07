@@ -24,13 +24,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <div className="flex min-h-screen">
       <Sidebar isAdmin={profile?.is_admin} />
       <div className="flex-1 flex flex-col">
-        <header className="border-b h-16 flex items-center justify-end px-6">
+        <header className="border-b border-black dark:border-zinc-700 h-16 flex items-center justify-end px-6 bg-[#FFFDF5] dark:bg-zinc-900">
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground">{user.email}</span>
             <ThemeToggle />
           </div>
         </header>
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1 p-6 dark:bg-zinc-950">{children}</main>
       </div>
     </div>
   );

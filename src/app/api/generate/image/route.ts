@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { checkRateLimit } from '@/lib/utils/rateLimit';
 import { addGenerationJob } from '@/lib/queue/producer';
 import type { ModelPricing, Generation } from '@/types/database';
@@ -10,6 +10,10 @@ const schema = z.object({
   prompt: z.string().min(1).max(2000),
   width: z.number().int().positive().optional().default(1024),
   height: z.number().int().positive().optional().default(1024),
+  image_url: z.string().url().optional(),
+  quality: z.string().optional(),
+  aspect_ratio: z.string().optional(),
+  size: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -26,7 +30,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }
 
-  const { model, prompt, width, height } = parsed.data;
+  const { model, prompt, width, height, image_url, quality, aspect_ratio, size } = parsed.data;
 
   const rateKey = `ratelimit:gen:${user.id}`;
   const rateResult = await checkRateLimit(rateKey, 5, 60);
@@ -37,7 +41,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { data: modelData } = await supabase
+  const admin = createServiceClient();
+
+  const { data: modelData } = await admin
     .from('model_pricing')
     .select('cost_kopecks')
     .eq('model_id', model)
@@ -50,15 +56,39 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Model not found' }, { status: 404 });
   }
 
-  const { data: genData, error: genError } = await supabase
+  // Динамическое ценообразование по quality
+  let cost = modelPricing.cost_kopecks;
+  if (quality) {
+    const { data: modelRecord } = await admin
+      .from('models')
+      .select('available_quality')
+      .eq('endpoint', model)
+      .single();
+
+    if (modelRecord?.available_quality) {
+      const qualityList = modelRecord.available_quality as Array<{ value: string; cost_kopecks?: number }>;
+      const qualityOption = qualityList.find(q => q.value === quality);
+      if (qualityOption?.cost_kopecks) cost = qualityOption.cost_kopecks;
+    }
+  }
+
+  const parameters: Record<string, unknown> = {
+    model, width, height,
+    ...(image_url ? { image_url } : {}),
+    ...(quality ? { quality } : {}),
+    ...(aspect_ratio ? { aspect_ratio } : {}),
+    ...(size ? { size } : {}),
+  };
+
+  const { data: genData, error: genError } = await admin
     .from('generations')
     .insert({
       user_id: user.id,
       type: 'image',
       status: 'pending',
       prompt,
-      parameters: { model, width, height },
-      cost_kopecks: modelPricing.cost_kopecks,
+      parameters,
+      cost_kopecks: cost,
     })
     .select()
     .single();
@@ -69,15 +99,15 @@ export async function POST(req: NextRequest) {
 
   const generation = genData as Generation;
 
-  const { data: deducted } = await supabase.rpc('deduct_balance', {
+  const { data: deducted } = await admin.rpc('deduct_balance', {
     p_user_id: user.id,
-    p_amount: modelPricing.cost_kopecks,
+    p_amount: cost,
     p_generation_id: generation.id,
     p_description: `Генерация изображения (${model})`,
   } as never);
 
   if (!deducted) {
-    await supabase
+    await admin
       .from('generations')
       .update({ status: 'failed', error_message: 'Insufficient balance' } as never)
       .eq('id', generation.id);
@@ -90,7 +120,7 @@ export async function POST(req: NextRequest) {
     type: 'image',
     model,
     prompt,
-    parameters: { width, height },
+    parameters,
   });
 
   return NextResponse.json({ generationId: generation.id });

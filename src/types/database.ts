@@ -55,7 +55,8 @@ export interface ModelPricing {
 }
 
 export interface ModelSize { label: string; value: string; }
-export interface ModelQuality { label: string; value: string; }
+export interface ModelQuality { label: string; value: string; cost_kopecks?: number; }
+export interface ModelDuration { label: string; value: number; }
 
 export interface Model {
   id: string;
@@ -68,10 +69,25 @@ export interface Model {
   supports_image_input: boolean;
   available_sizes: ModelSize[];
   available_quality: ModelQuality[];
+  available_durations: ModelDuration[];
   templates: string[];
   preview_url: string | null;
   is_active: boolean;
   sort_order: number;
+  created_at: string;
+}
+
+export interface News {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  content?: string;
+  image_url?: string;
+  model_slug?: string;
+  tags: string[];
+  published_at: string;
+  is_active: boolean;
   created_at: string;
 }
 
