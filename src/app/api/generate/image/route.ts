@@ -10,6 +10,7 @@ const schema = z.object({
   prompt: z.string().min(1).max(2000),
   width: z.number().int().positive().optional().default(1024),
   height: z.number().int().positive().optional().default(1024),
+  image_url: z.string().url().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -26,7 +27,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }
 
-  const { model, prompt, width, height } = parsed.data;
+  const { model, prompt, width, height, image_url } = parsed.data;
 
   const rateKey = `ratelimit:gen:${user.id}`;
   const rateResult = await checkRateLimit(rateKey, 5, 60);
@@ -59,7 +60,7 @@ export async function POST(req: NextRequest) {
       type: 'image',
       status: 'pending',
       prompt,
-      parameters: { model, width, height },
+      parameters: { model, width, height, ...(image_url ? { image_url } : {}) },
       cost_kopecks: modelPricing.cost_kopecks,
     })
     .select()
@@ -92,7 +93,7 @@ export async function POST(req: NextRequest) {
     type: 'image',
     model,
     prompt,
-    parameters: { width, height },
+    parameters: { width, height, ...(image_url ? { image_url } : {}) },
   });
 
   return NextResponse.json({ generationId: generation.id });

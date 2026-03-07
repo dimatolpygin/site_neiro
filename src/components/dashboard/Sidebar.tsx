@@ -6,8 +6,6 @@ import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
-  ImageIcon,
-  Video,
   History,
   CreditCard,
   LogOut,
@@ -18,8 +16,6 @@ import {
 const navItems = [
   { href: '/dashboard', label: 'Обзор', icon: LayoutDashboard },
   { href: '/models', label: 'Маркетплейс', icon: Store },
-  { href: '/generate/image', label: 'Изображения', icon: ImageIcon },
-  { href: '/generate/video', label: 'Видео', icon: Video },
   { href: '/history', label: 'История', icon: History },
   { href: '/billing', label: 'Баланс и оплата', icon: CreditCard },
 ];
