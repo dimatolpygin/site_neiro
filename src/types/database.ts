@@ -77,6 +77,20 @@ export interface Model {
   created_at: string;
 }
 
+export interface News {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  content?: string;
+  image_url?: string;
+  model_slug?: string;
+  tags: string[];
+  published_at: string;
+  is_active: boolean;
+  created_at: string;
+}
+
 export interface PricingPlan {
   id: string;
   name: string;

@@ -47,6 +47,7 @@ interface WavespeedResult {
 }
 
 async function wavespeedGenerate(model: string, input: object): Promise<string> {
+  console.log(`[WS] ${model}`, JSON.stringify(input));
   const createRes = await fetch(`${WAVESPEED_BASE_URL}/${model}`, {
     method: 'POST',
     headers: {
