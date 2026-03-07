@@ -12,10 +12,12 @@ import {
   CreditCard,
   LogOut,
   Shield,
+  Store,
 } from 'lucide-react';
 
 const navItems = [
   { href: '/dashboard', label: 'Обзор', icon: LayoutDashboard },
+  { href: '/models', label: 'Маркетплейс', icon: Store },
   { href: '/generate/image', label: 'Изображения', icon: ImageIcon },
   { href: '/generate/video', label: 'Видео', icon: Video },
   { href: '/history', label: 'История', icon: History },
