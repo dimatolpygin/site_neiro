@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import type { News } from '@/types/database';
-import { NewsAdminForm, NewsEditButton } from './NewsAdminForm';
+import { NewsAdminForm, NewsEditButton, NewsDeleteButton } from './NewsAdminForm';
 
 async function toggleNews(id: string, current: boolean) {
   'use server';
@@ -63,17 +63,7 @@ export default async function AdminNewsPage() {
                   {item.is_active ? 'Скрыть' : 'Показать'}
                 </button>
               </form>
-              <form action={deleteNews.bind(null, item.id)}>
-                <button
-                  type="submit"
-                  className="text-xs font-bold border-2 border-black px-3 py-1 hover:bg-[#FF2D78] hover:text-white transition-all"
-                  onClick={e => {
-                    if (!confirm('Удалить новость?')) e.preventDefault();
-                  }}
-                >
-                  Удалить
-                </button>
-              </form>
+              <NewsDeleteButton action={deleteNews.bind(null, item.id)} />
             </div>
           </div>
         ))}

@@ -148,6 +148,20 @@ export function NewsAdminForm() {
   return <NewsForm initial={empty} onClose={() => setOpen(false)} />;
 }
 
+export function NewsDeleteButton({ action }: { action: () => Promise<void> }) {
+  return (
+    <button
+      onClick={async e => {
+        if (!confirm('Удалить новость?')) return;
+        await action();
+      }}
+      className="text-xs font-bold border-2 border-black px-3 py-1 hover:bg-[#FF2D78] hover:text-white transition-all"
+    >
+      Удалить
+    </button>
+  );
+}
+
 export function NewsEditButton({ news }: { news: News }) {
   const [open, setOpen] = useState(false);
 
