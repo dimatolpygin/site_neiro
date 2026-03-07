@@ -37,14 +37,14 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const admin = createServiceClient();
-
-  const { data: modelData } = await admin
+  const { data: modelData } = await supabase
     .from('model_pricing')
     .select('cost_kopecks')
     .eq('model_id', model)
     .eq('is_active', true)
     .single();
+
+  const admin = createServiceClient();
 
   const modelPricing = modelData as ModelPricing | null;
 
